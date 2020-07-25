@@ -14,8 +14,6 @@ if __name__ == '__main__':
     data_path = "./data/"
     videos_list = ["2020-03-15_19-27-56-f2472745", "2020-06-22_11-14-22-319eaf00", 
                    "2020-06-25_17-25-16_alexl_everyday-tyingshoelaces-189703d3"]
-    dataset = GazeFrameDataset(data_path, videos_list, transform=transform)
-    print("Dataset done")
 
     # net
     net = SaliencyNet()
@@ -31,6 +29,7 @@ if __name__ == '__main__':
     for epoch in range(10):
         print("Epoch", epoch + 1)
         running_loss = 0.0
+        dataset = GazeFrameDataset(data_path, videos_list, transform=transform)
         dataloader = torch.utils.data.DataLoader(dataset)
         print("Dataloader done")
         for i, data in enumerate(dataloader, 0):
