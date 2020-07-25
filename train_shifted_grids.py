@@ -7,14 +7,6 @@ if __name__ == '__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print('Running on device: {}'.format(device))
 
-    # data
-    size_transform = SetSize((227,227), (13,13), (3,3))
-    tensor_transform = ToTensor()
-    transform = transforms.Compose([size_transform, tensor_transform])
-    data_path = "./data/"
-    videos_list = ["2020-03-15_19-27-56-f2472745", "2020-06-22_11-14-22-319eaf00", 
-                   "2020-06-25_17-25-16_alexl_everyday-tyingshoelaces-189703d3"]
-
     N = 5 # shifted grid is size N x N
 
     # data
@@ -49,10 +41,11 @@ if __name__ == '__main__':
             optimizer.zero_grad()
             outs = net(inputs)
             total_loss = None
-            for j in range(len(outs)):   
-                criterion = criterions[j]
+            for j in range(len(outs)):
+                out = outs[j]
                 label = labels[j].to(device)
-                loss = criterion(outs[j], labels[j])
+                criterion = criterions[j]
+                loss = criterion(out, label)
                 if total_loss:
                     total_loss = torch.add(total_loss, loss)
                 else:
