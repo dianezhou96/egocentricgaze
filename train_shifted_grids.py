@@ -42,15 +42,16 @@ if __name__ == '__main__':
         print("Epoch", epoch + 1)
         running_loss = 0.0
         dataset = GazeFrameDataset(data_path, videos_list, transform=transform)
-        dataloader = torch.utils.data.DataLoader(dataset, batch_size=2)
+        dataloader = torch.utils.data.DataLoader(dataset)
         print("dataloader done")
         for i, data in enumerate(dataloader, 0):
-            inputs, labels = data[0].to(device), data[1].to(device)
+            inputs, labels = data[0].to(device), data[1]
             optimizer.zero_grad()
             outs = net(inputs)
             total_loss = None
             for j in range(len(outs)):   
                 criterion = criterions[j]
+                label = labels[j].to(device)
                 loss = criterion(outs[j], labels[j])
                 if total_loss:
                     total_loss = torch.add(total_loss, loss)
