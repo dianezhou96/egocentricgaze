@@ -13,5 +13,5 @@
 ### Expected data format:
 1. Data should go in a folder named "data" at the root directory.
 2. For each video, create a directory with the video name.
-3. Within each video directory, the raw video file should be named "video.mp4" and the gaze positions csv file should be named "gaze_positions.csv".
+3. Within each video directory, the raw video file should be named "world.mp4" and the gaze positions csv file should be named "gaze_positions.csv".
 Data comes from egocentric video recorded by Pupil glasses. Data files are exported from Pupil Player.
