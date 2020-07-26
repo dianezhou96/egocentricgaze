@@ -32,9 +32,12 @@ class GazeFrameDataset(IterableDataset):
 
 	def __next__(self):
 
+		# end of video; set new video
 		if self.gaze_idx == len(self.df_gaze.index):
 			self.set_new_video()
 
+		# Find next frame
+		# Sometimes last frames are empty so need to set new video
 		found_frame = False
 		while not found_frame:
 			frame_idx = self.df_gaze.loc[self.gaze_idx, 'world_index']
@@ -43,6 +46,8 @@ class GazeFrameDataset(IterableDataset):
 				self.set_new_video()
 			else:
 				found_frame = True
+
+		# Extract gaze info for frame
 		frame = frame.transpose(1, 0, 2) # make shape H x W
 		gaze_position = (self.df_gaze.loc[self.gaze_idx, 'norm_pos_x'], 
 						 self.df_gaze.loc[self.gaze_idx, 'norm_pos_y'])
@@ -83,43 +88,10 @@ class GazeFrameDataset(IterableDataset):
 		df_gaze = df_unique[['world_index', 'norm_pos_x', 'norm_pos_y']].reset_index(drop=True)
 		return df_gaze
 
-# single video
-# class GazeFrameDataset(Dataset):
-
-# 	def __init__(self, data_path, video_name, transform=None):
-# 		self.data_path = data_path
-# 		self.video = self.get_frames(video_name)
-# 		self.df_gaze = self.get_gaze_positions(video_name)
-# 		self.transform = transform
-
-# 	def __len__(self):
-# 		return len(self.df_gaze)
-
-# 	def __getitem__(self, idx):
-# 		idx_frame = self.df_gaze.loc[idx, 'world_index']
-# 		print(idx_frame)
-# 		frame = self.video[idx_frame].transpose(1, 0, 2) # make shape H x W
-# 		gaze_position = (self.df_gaze.loc[idx, 'norm_pos_x'], self.df_gaze.loc[idx, 'norm_pos_y'])
-# 		sample = (frame, gaze_position)
-# 		if self.transform:
-# 			sample = self.transform(sample)
-# 		return sample
-
-# 	def get_frames(self, video_name):
-# 		path = self.data_path + video_name + '/world.mp4'
-# 		video = mmcv.VideoReader(path)
-# 		return video
-
-# 	def get_gaze_positions(self, video_name):
-# 		path = self.data_path + video_name + '/gaze_positions.csv'
-# 		df = pd.read_csv(path)
-# 		# Keep only one gaze position per frame
-# 		df_unique = df.groupby('world_index', group_keys=False).apply(lambda df: df.sample(1))
-# 		# Keep only relevant columns
-# 		df_gaze = df_unique[['world_index', 'norm_pos_x', 'norm_pos_y']].reset_index(drop=True)
-# 		return df_gaze
-
 class SetSize(object):
+	"""
+	Transform object to set frame to desired size and create saliency map from gaze location
+	"""
 
 	def __init__(self, frame_size, map_size, gaussian_blur_size):
 		self.frame_size = frame_size
@@ -145,6 +117,9 @@ class SetSize(object):
 		return resized_frame, target
 
 class ToTensor(object):
+	"""
+	Transform object to set frame and saliency map to tensor type
+	"""
 
 	def __call__(self, sample):
 		frame, target = sample
@@ -156,6 +131,10 @@ class ToTensor(object):
 		return (torch.from_numpy(frame).float(), torch.from_numpy(target).float())
 
 class SetSizeShiftedGrids(object):
+	"""
+	Transform object to set frame to desired size and 
+	create target classes from gaze location for shifted grids method
+	"""
 
 	def __init__(self, frame_size, N):
 		self.frame_size = frame_size
@@ -187,14 +166,14 @@ class SetSizeShiftedGrids(object):
 			gaze_y = get_abs_pos(gaze_norm_y_shifted, self.N)
 			gaze_x = get_abs_pos(gaze_norm_x_shifted, self.N)
 			target = gaze_y * self.N + gaze_x
-			# target = np.zeros((self.N, self.N))
-			# target[gaze_y, gaze_x] = 1
-			# target = target.flatten()
 			targets.append(target)
 
 		return resized_frame, targets
 
 class ToTensorShiftedGrids(object):
+	"""
+	Transform object to set frame to tensor type
+	"""
 
 	def __call__(self, sample):
 		frame, targets = sample
@@ -208,7 +187,7 @@ class ToTensorShiftedGrids(object):
 
 
 if __name__ == '__main__':
-	print("Dummy test...")
+	# print("Dummy test...")
 	# frames = get_frames('world')
 	# print("Number of frames:", len(frames))
 	# gaze_positions = get_gaze_positions('gaze_positions')
