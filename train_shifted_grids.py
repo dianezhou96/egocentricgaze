@@ -18,8 +18,7 @@ if __name__ == '__main__':
                    "2020-06-25_17-25-16_alexl_everyday-tyingshoelaces-189703d3"]
 
     # net
-    net = SaliencyShiftedGridsNet(N)
-    net.to(device)
+    net = SaliencyShiftedGridsNet(N, device=device)
 
     # loss functions
     criterions = []
@@ -30,7 +29,7 @@ if __name__ == '__main__':
     optimizer = optim.SGD(net.parameters(), lr=0.01)
     print("net setup")
 
-    for epoch in range(2):
+    for epoch in range(10):
         print("Epoch", epoch + 1)
         running_loss = 0.0
         dataset = GazeFrameDataset(data_path, videos_list, transform=transform)

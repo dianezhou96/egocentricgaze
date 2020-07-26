@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 class SaliencyShiftedGridsNet(nn.Module):
 
-    def __init__(self, N):
+    def __init__(self, N, device):
         super(SaliencyShiftedGridsNet, self).__init__()
 
         # First 5 layers of AlexNet
@@ -25,31 +25,32 @@ class SaliencyShiftedGridsNet(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(384, 256, kernel_size=3, padding=1),
             nn.ReLU(inplace=True)
-        )
+        ).to(device)
 
         # Additional convolutional layer to turn into saliency map
         self.classifier = nn.Sequential(
             nn.Conv2d(256, 1, kernel_size=1),
             nn.ReLU(inplace=True)
-        )
+        ).to(device)
 
-        # 5 shfited grids
+        # 5 shifted grids
         self.shifted_grids = []
         for i in range(5):
             shifted_grid = nn.Sequential(
                 nn.Flatten(),
                 nn.Linear(13 * 13, N * N),
                 nn.ReLU(inplace=True)
-            )
+            ).to(device)
             self.shifted_grids.append(shifted_grid)
 
     def forward(self, x):
         x = self.alexnet(x)
         x = self.classifier(x)
-        out = []
+        outs = []
         for shifted_grid in self.shifted_grids:
-            out.append(shifted_grid(x))
-        return out
+            out = shifted_grid(x)
+            outs.append(shifted_grid(x))
+        return outs
 
 if __name__ == '__main__':
     # print("Dummy test...")
