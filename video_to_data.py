@@ -2,6 +2,7 @@ import cv2
 import mmcv
 import numpy as np
 import pandas as pd
+import random
 import torch
 from torch.utils.data import DataLoader, Dataset, IterableDataset
 from torchvision import transforms
@@ -17,64 +18,57 @@ class GazeFrameDataset(IterableDataset):
 	transform: transform to apply to data
 	"""
 
-	def __init__(self, data_path, videos_list, transform=None):
+	def __init__(self, data_path, videos_list, transform=None, shuffle=False):
 
 		self.data_path = data_path
-		self.videos_list = videos_list
 		self.transform = transform
 
-		self.video_idx = -1
-		self.gaze_idx = 0
-		self.set_new_video()
+		self.video_readers = [self.get_video_reader(video_name) for video_name in videos_list]
+		self.gaze_dfs = [self.get_gaze_positions(video_name) for video_name in videos_list]
+
+		self.video_gaze_tuples = []
+		for i, gaze_df in enumerate(self.gaze_dfs):
+			self.video_gaze_tuples.extend([(i, j) for j in range(len(gaze_df))])
+		if shuffle:
+			random.shuffle(self.video_gaze_tuples)
+
+		self.video_gaze_idx = 0
 
 	def __iter__(self):
 		return self
 
 	def __next__(self):
 
-		# end of video; set new video
-		if self.gaze_idx == len(self.df_gaze.index):
-			self.set_new_video()
-
 		# Find next frame
 		# Sometimes last frames are empty so need to set new video
 		found_frame = False
 		while not found_frame:
-			frame_idx = self.df_gaze.loc[self.gaze_idx, 'world_index']
-			frame = self.video[frame_idx]
-			if frame is None:
-				self.set_new_video()
-			else:
+
+			if self.video_gaze_idx == len(self.video_gaze_tuples):
+				raise StopIteration
+
+			video_idx, gaze_idx = self.video_gaze_tuples[self.video_gaze_idx]
+			video = self.video_readers[video_idx]
+			gaze_df = self.gaze_dfs[video_idx]
+			frame_idx = gaze_df.loc[gaze_idx, 'world_index']
+			frame = video[frame_idx]
+
+			self.video_gaze_idx += 1
+			if frame is not None:
 				found_frame = True
 
 		# Extract gaze info for frame
 		frame = frame.transpose(1, 0, 2) # make shape H x W
-		gaze_position = (self.df_gaze.loc[self.gaze_idx, 'norm_pos_x'], 
-						 self.df_gaze.loc[self.gaze_idx, 'norm_pos_y'])
+		gaze_position = (gaze_df.loc[gaze_idx, 'norm_pos_x'], 
+						 gaze_df.loc[gaze_idx, 'norm_pos_y'])
 		sample = (frame, gaze_position)
 
 		if self.transform:
 			sample = self.transform(sample)
 
-		self.gaze_idx += 1
-
 		return sample
 
-	def set_new_video(self):
-
-		if self.video_idx < len(self.videos_list) - 1:
-			self.video_idx += 1
-		else:
-			raise StopIteration
-
-		video_name = self.videos_list[self.video_idx]
-		self.video = self.get_frames(video_name)
-		self.df_gaze = self.get_gaze_positions(video_name)
-		self.gaze_idx = 0
-
-		print(video_name)
-
-	def get_frames(self, video_name):
+	def get_video_reader(self, video_name):
 		path = self.data_path + video_name + '/world.mp4'
 		video = mmcv.VideoReader(path)
 		return video
@@ -223,11 +217,14 @@ if __name__ == '__main__':
 	data_path = "./data/"
 	videos_list = ["2020-03-15_19-27-56-f2472745", "2020-06-22_11-14-22-319eaf00", 
 				   "2020-06-25_17-25-16_alexl_everyday-tyingshoelaces-189703d3"]
-	dataset = GazeFrameDataset(data_path, videos_list, transform=transform)
-	for i, sample in enumerate(dataset):
+	dataset = GazeFrameDataset(data_path, videos_list, transform=transform, shuffle=True)
+	# for i, sample in enumerate(dataset):
+	# 	if i % 100 == 99:
+	# 		print(i+1)
+	dataloader = torch.utils.data.DataLoader(dataset)
+	for i, data in enumerate(dataloader, 0):
 		if i % 100 == 99:
 			print(i+1)
-	torch.utils.data.DataLoader(dataset)
 
 
 	print("Done!")

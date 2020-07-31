@@ -29,7 +29,7 @@ if __name__ == '__main__':
     for epoch in range(10):
         print("Epoch", epoch + 1)
         running_loss = 0.0
-        dataset = GazeFrameDataset(data_path, videos_list, transform=transform)
+        dataset = GazeFrameDataset(data_path, videos_list, transform=transform, shuffle=True)
         dataloader = torch.utils.data.DataLoader(dataset)
         print("Dataloader done")
         for i, data in enumerate(dataloader, 0):
