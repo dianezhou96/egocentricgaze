@@ -1,3 +1,4 @@
+from datetime import datetime
 from parser import parser
 from saliency import *
 from saliency_shifted_grids import *
@@ -5,7 +6,7 @@ import torch
 
 
 
-def train(device, gaussian_blur_size=(3,3), learning_rate=0.01, num_epochs=10, data_path="./data/"):
+def train(device, gaussian_blur_size=(3,3), learning_rate=0.01, num_epochs=10, batch_size=32, data_path="./data/"):
 
     # net
     net = SaliencyNet()
@@ -25,7 +26,7 @@ def train(device, gaussian_blur_size=(3,3), learning_rate=0.01, num_epochs=10, d
         print("Epoch", epoch + 1)
         running_loss = 0.0
         dataset = GazeFrameDataset(data_path, videos_list, transform=transform, shuffle=True)
-        dataloader = torch.utils.data.DataLoader(dataset)
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size)
         print("Dataloader done")
         for i, data in enumerate(dataloader, 0):
             inputs, labels = data[0].to(device), data[1].to(device)
@@ -36,14 +37,15 @@ def train(device, gaussian_blur_size=(3,3), learning_rate=0.01, num_epochs=10, d
             optimizer.step()
 
             running_loss += loss.item()
-            if i%1000 == 999:
+            if i%10 == 9:
                 print('[%d, %5d] loss: %.10f' %
                     (epoch + 1, i + 1, running_loss / 100))
                 running_loss = 0.0
+                break
 
     return net, optimizer
 
-def train_shifted_grids(device, N=5, learning_rate=0.01, num_epochs=10, data_path="./data/"):
+def train_shifted_grids(device, N=5, learning_rate=0.01, num_epochs=10, batch_size=32, data_path="./data/"):
 
     # net
     net = SaliencyShiftedGridsNet(N)
@@ -67,8 +69,8 @@ def train_shifted_grids(device, N=5, learning_rate=0.01, num_epochs=10, data_pat
     for epoch in range(num_epochs):
         print("Epoch", epoch + 1)
         running_loss = 0.0
-        dataset = GazeFrameDataset(data_path, videos_list, transform=transform)
-        dataloader = torch.utils.data.DataLoader(dataset)
+        dataset = GazeFrameDataset(data_path, videos_list, transform=transform, shuffle=True)
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size)
         print("dataloader done")
         for i, data in enumerate(dataloader, 0):
             inputs, labels = data[0].to(device), data[1]
@@ -88,18 +90,18 @@ def train_shifted_grids(device, N=5, learning_rate=0.01, num_epochs=10, data_pat
             optimizer.step()
 
             running_loss += total_loss.item()
-            if i%1000 == 999:
+            if i%10 == 9:
                 print('[%d, %5d] loss: %.10f' %
                     (epoch + 1, i + 1, running_loss / 100))
                 running_loss = 0.0
 
     return net, optimizer
 
-def save_model(net, optimizer):
+def save_model(net, optimizer, save_as):
     torch.save({
         'model_state_dict': net.state_dict(), 
         'optimizer_state_dict': optimizer.state_dict()
-        }, 'model.tar')
+        }, save_as)
 
 
 
@@ -112,13 +114,32 @@ if __name__ == '__main__':
 
     videos_list = get_videos_list_from_file(args.train_file)
 
-    blur = (args.gaussian_blur_size, args.gaussian_blur_size)
-    net, optimizer = train(device, 
-        gaussian_blur_size=blur, 
-        learning_rate=args.learning_rate, 
-        num_epochs=args.num_epochs
-    )
+    current_time = datetime.now()
+    print("Starting at", current_time.strftime("%m/%d/%Y %H:%M:%S"))
+    if not args.shifted_grids:
+        blur = (args.gaussian_blur_size, args.gaussian_blur_size)
+        net, optimizer = train(device, 
+            gaussian_blur_size=blur, 
+            learning_rate=args.learning_rate, 
+            num_epochs=args.num_epochs,
+            batch_size=args.batch_size
+        )
+        save_as = "model_blur_" + str(args.gaussian_blur_size)
+    else:
+        net, optimizer = train_shifted_grids(device,
+             N=args.N,
+             learning_rate=args.learning_rate,
+             num_epochs=args.num_epochs,
+             batch_size=args.batch_size
+        )
+        save_as = "model_shifted_grids_N_" + str(args.N)
 
-    # net, optimizer = train_shifted_grids(device)
+    save_as += "_lr_" + str(args.learning_rate) + \
+        "_epochs_" + str(args.num_epochs) + \
+        "_batch_" + str(args.batch_size) + \
+        "_" + current_time.strftime("%m-%d-%Y_%H-%M") + ".tar"
 
-    print("Finished")
+    current_time = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
+    print("Finished at", current_time)
+
+    save_model(net, optimizer, save_as)
