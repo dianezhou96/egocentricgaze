@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 class SaliencyShiftedGridsNet(nn.Module):
 
-    def __init__(self, N, device):
+    def __init__(self, N):
         super(SaliencyShiftedGridsNet, self).__init__()
 
         # First 5 layers of AlexNet
@@ -25,31 +25,62 @@ class SaliencyShiftedGridsNet(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(384, 256, kernel_size=3, padding=1),
             nn.ReLU(inplace=True)
-        ).to(device)
+        )
 
         # Additional convolutional layer to turn into saliency map
         self.classifier = nn.Sequential(
             nn.Conv2d(256, 1, kernel_size=1),
             nn.ReLU(inplace=True)
-        ).to(device)
+        )
 
         # 5 shifted grids
-        self.shifted_grids = []
-        for i in range(5):
-            shifted_grid = nn.Sequential(
-                nn.Flatten(),
-                nn.Linear(13 * 13, N * N),
-                nn.ReLU(inplace=True)
-            ).to(device)
-            self.shifted_grids.append(shifted_grid)
+        # self.shifted_grids = []
+        # for i in range(5):
+        #     shifted_grid = nn.Sequential(
+        #         nn.Flatten(),
+        #         nn.Linear(13 * 13, N * N),
+        #         nn.ReLU(inplace=True)
+        #     ).to(device)
+        #     self.shifted_grids.append(shifted_grid)
+        self.shifted_grid_1 = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(13 * 13, N * N),
+            nn.ReLU(inplace=True)
+        )
+        self.shifted_grid_2 = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(13 * 13, N * N),
+            nn.ReLU(inplace=True)
+        )
+        self.shifted_grid_3 = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(13 * 13, N * N),
+            nn.ReLU(inplace=True)
+        )
+        self.shifted_grid_4 = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(13 * 13, N * N),
+            nn.ReLU(inplace=True)
+        )
+        self.shifted_grid_5 = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(13 * 13, N * N),
+            nn.ReLU(inplace=True)
+        )
 
     def forward(self, x):
         x = self.alexnet(x)
         x = self.classifier(x)
-        outs = []
-        for shifted_grid in self.shifted_grids:
-            out = shifted_grid(x)
-            outs.append(shifted_grid(x))
+        # for shifted_grid in self.shifted_grids:
+        #     out = shifted_grid(x)
+        #     outs.append(shifted_grid(x))
+        outs = [
+            self.shifted_grid_1(x),
+            self.shifted_grid_2(x),
+            self.shifted_grid_3(x),
+            self.shifted_grid_4(x),
+            self.shifted_grid_5(x),
+        ]
         return outs
 
 if __name__ == '__main__':

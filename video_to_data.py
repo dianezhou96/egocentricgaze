@@ -178,6 +178,23 @@ class ToTensorShiftedGrids(object):
 		frame = torch.from_numpy(frame).float()
 		return (frame, targets)
 
+def make_transform(gaussian_blur_size=(3,3)):
+    size_transform = SetSize((227,227), (13,13), gaussian_blur_size)
+    tensor_transform = ToTensor()
+    transform = transforms.Compose([size_transform, tensor_transform])
+    return transform
+
+def make_transform_shifted_grids(N=5):
+    size_transform = SetSizeShiftedGrids((227,227), N)
+    tensor_transform = ToTensorShiftedGrids()
+    transform = transforms.Compose([size_transform, tensor_transform])
+    return transform
+
+def get_videos_list_from_file(filename):
+    with open(filename, 'r') as f:
+        videos_list = f.read().split("\n")
+    return videos_list
+
 
 
 if __name__ == '__main__':
