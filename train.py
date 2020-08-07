@@ -127,7 +127,7 @@ if __name__ == '__main__':
         )
         save_as = "model_blur_" + str(args.gaussian_blur_size)
     else:
-        net, optimizer = train_shifted_grids(device,
+        net, optimizer = train_shifted_grids(device, videos_list, 
              N=args.N,
              learning_rate=args.learning_rate,
              num_epochs=args.num_epochs,
