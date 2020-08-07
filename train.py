@@ -6,7 +6,7 @@ import torch
 
 
 
-def train(device, gaussian_blur_size=(3,3), learning_rate=0.01, num_epochs=10, batch_size=32, data_path="./data/"):
+def train(device, gaussian_blur_size=(3,3), learning_rate=0.01, num_epochs=5, batch_size=32, data_path="./data/"):
 
     # net
     net = SaliencyNet()
@@ -41,11 +41,10 @@ def train(device, gaussian_blur_size=(3,3), learning_rate=0.01, num_epochs=10, b
                 print('[%d, %5d] loss: %.10f' %
                     (epoch + 1, i + 1, running_loss / 100))
                 running_loss = 0.0
-                break
 
     return net, optimizer
 
-def train_shifted_grids(device, N=5, learning_rate=0.01, num_epochs=10, batch_size=32, data_path="./data/"):
+def train_shifted_grids(device, N=5, learning_rate=0.01, num_epochs=5, batch_size=32, data_path="./data/"):
 
     # net
     net = SaliencyShiftedGridsNet(N)
