@@ -6,7 +6,8 @@ import torch
 
 
 
-def train(device, gaussian_blur_size=(3,3), learning_rate=0.01, num_epochs=10, batch_size=32, data_path="./data/"):
+def train(device, videos_list, gaussian_blur_size=(3,3), learning_rate=0.01, num_epochs=10, 
+    batch_size=32, data_path="./data/"):
 
     # net
     net = SaliencyNet()
@@ -45,7 +46,8 @@ def train(device, gaussian_blur_size=(3,3), learning_rate=0.01, num_epochs=10, b
 
     return net, optimizer
 
-def train_shifted_grids(device, N=5, learning_rate=0.01, num_epochs=10, batch_size=32, data_path="./data/"):
+def train_shifted_grids(device, videos_list, N=5, learning_rate=0.01, num_epochs=10, 
+    batch_size=32, data_path="./data/"):
 
     # net
     net = SaliencyShiftedGridsNet(N)
@@ -118,7 +120,7 @@ if __name__ == '__main__':
     print("Starting at", current_time.strftime("%m/%d/%Y %H:%M:%S"))
     if not args.shifted_grids:
         blur = (args.gaussian_blur_size, args.gaussian_blur_size)
-        net, optimizer = train(device, 
+        net, optimizer = train(device, videos_list, 
             gaussian_blur_size=blur, 
             learning_rate=args.learning_rate, 
             num_epochs=args.num_epochs,
