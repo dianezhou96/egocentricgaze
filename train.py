@@ -42,7 +42,6 @@ def train(device, videos_list, gaussian_blur_size=(3,3), learning_rate=0.01, num
                 print('[%d, %5d] loss: %.10f' %
                     (epoch + 1, i + 1, running_loss / 100))
                 running_loss = 0.0
-                break
 
     return net, optimizer
 
