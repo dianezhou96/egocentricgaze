@@ -96,6 +96,8 @@ def train_shifted_grids(device, videos_list, N=5, learning_rate=0.01, num_epochs
                     (epoch + 1, i + 1, running_loss / 100))
                 running_loss = 0.0
 
+        save_model(net, optimizer, "model_shifted_" + str(epoch+1) + '.tar')
+
     return net, optimizer
 
 def save_model(net, optimizer, save_as):
