@@ -83,44 +83,44 @@ class GazeFrameDataset(IterableDataset):
         return df_gaze
 
 class SetSize(object):
-	"""
-	Transform object to set frame to desired size and create saliency map from gaze location
-	"""
+    """
+    Transform object to set frame to desired size and create saliency map from gaze location
+    """
 
-	def __init__(self, frame_size, map_size, gaussian_blur_size, class_size=None):
-		self.frame_size = frame_size
-		self.map_size = map_size
-		self.gaussian_blur_size = gaussian_blur_size
-		self.class_size = class_size
+    def __init__(self, frame_size, map_size, gaussian_blur_size, class_size=None):
+        self.frame_size = frame_size
+        self.map_size = map_size
+        self.gaussian_blur_size = gaussian_blur_size
+        self.class_size = class_size
 
-	def __call__(self, sample):
-		frame, gaze_position = sample
+    def __call__(self, sample):
+        frame, gaze_position = sample
 
-		# Resize frame
-		resized_frame = cv2.resize(frame, dsize=self.frame_size)
+        # Resize frame
+        resized_frame = cv2.resize(frame, dsize=self.frame_size)
 
-		# Create target
-		gaze_norm_x, gaze_norm_y = gaze_position
-		get_abs_pos = lambda x, upper: int(max(0, min(x * upper, upper-1)))
-		# Saliency map with gaussian blur
-		if self.gaussian_blur_size:
-			height, width = self.map_size
-			gaze_y = get_abs_pos(gaze_norm_y, height)
-			gaze_x = get_abs_pos(gaze_norm_x, width)
-			target = np.zeros((height, width))
-			target[gaze_y, gaze_x] = 1
-			target = cv2.GaussianBlur(target, self.gaussian_blur_size, 0)
-		# Class label
-		elif self.class_size:
-			height, width = self.class_size
-			gaze_y = get_abs_pos(gaze_norm_y, height)
-			gaze_x = get_abs_pos(gaze_norm_x, width)
-			target = gaze_y * width + gaze_x
-		# Normalized coordinates
-		else:
-			target = gaze_position
+        # Create target
+        gaze_norm_x, gaze_norm_y = gaze_position
+        get_abs_pos = lambda x, upper: int(max(0, min(x * upper, upper-1)))
+        # Saliency map with gaussian blur
+        if self.gaussian_blur_size:
+            height, width = self.map_size
+            gaze_y = get_abs_pos(gaze_norm_y, height)
+            gaze_x = get_abs_pos(gaze_norm_x, width)
+            target = np.zeros((height, width))
+            target[gaze_y, gaze_x] = 1
+            target = cv2.GaussianBlur(target, self.gaussian_blur_size, 0)
+        # Class label
+        elif self.class_size:
+            height, width = self.class_size
+            gaze_y = get_abs_pos(gaze_norm_y, height)
+            gaze_x = get_abs_pos(gaze_norm_x, width)
+            target = gaze_y * width + gaze_x
+        # Normalized coordinates
+        else:
+            target = gaze_position
 
-		return resized_frame, target
+        return resized_frame, target
 
 class ToTensor(object):
     """
@@ -130,11 +130,11 @@ class ToTensor(object):
     def __call__(self, sample):
         frame, target = sample
 
-		# numpy image: H x W x C
-		# torch image: C x H x W
-		frame = frame.transpose((2, 0, 1)) / 255 # 0 to 1 instead of 0 to 255
-		target = np.expand_dims(target, 0)
-		return (torch.from_numpy(frame).float(), torch.from_numpy(target).float())
+        # numpy image: H x W x C
+        # torch image: C x H x W
+        frame = frame.transpose((2, 0, 1)) / 255 # 0 to 1 instead of 0 to 255
+        target = np.expand_dims(target, 0)
+        return (torch.from_numpy(frame).float(), torch.from_numpy(target).float())
 
 class SetSizeShiftedGrids(object):
     """

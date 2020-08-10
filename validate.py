@@ -86,7 +86,7 @@ def validate_shifted_grids(videos_list, model_file, N=5, resize=(5,5), data_path
             target = targets[j].to(device)
             target = np.squeeze(target.detach().numpy())
             final_target[target] += 1
-        final_output = final_output / np.sum(final_output) # normalize array to sum to 1
+        # final_output = final_output / np.sum(final_output) # normalize array to sum to 1
         y_true.append(np.argmax(final_target))
         y_score.append(final_output)
 

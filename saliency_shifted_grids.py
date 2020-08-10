@@ -45,27 +45,27 @@ class SaliencyShiftedGridsNet(nn.Module):
         self.shifted_grid_1 = nn.Sequential(
             nn.Flatten(),
             nn.Linear(13 * 13, N * N),
-            nn.ReLU(inplace=True)
+            nn.Softmax(dim=1)
         )
         self.shifted_grid_2 = nn.Sequential(
             nn.Flatten(),
             nn.Linear(13 * 13, N * N),
-            nn.ReLU(inplace=True)
+            nn.Softmax(dim=1)
         )
         self.shifted_grid_3 = nn.Sequential(
             nn.Flatten(),
             nn.Linear(13 * 13, N * N),
-            nn.ReLU(inplace=True)
+            nn.Softmax(dim=1)
         )
         self.shifted_grid_4 = nn.Sequential(
             nn.Flatten(),
             nn.Linear(13 * 13, N * N),
-            nn.ReLU(inplace=True)
+            nn.Softmax(dim=1)
         )
         self.shifted_grid_5 = nn.Sequential(
             nn.Flatten(),
             nn.Linear(13 * 13, N * N),
-            nn.ReLU(inplace=True)
+            nn.Softmax(dim=1)
         )
 
     def forward(self, x):
