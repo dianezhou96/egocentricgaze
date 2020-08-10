@@ -7,7 +7,9 @@ import torch
 
 
 
-def validate(device, videos_list, model_file, resize=(5,5), data_path = "./data/"):
+def validate(videos_list, model_file, resize=(5,5), data_path = "./data/"):
+
+    device = torch.device('cpu')
 
     # Load net and optimizer
     model = torch.load(model_file, map_location=device)
@@ -17,7 +19,7 @@ def validate(device, videos_list, model_file, resize=(5,5), data_path = "./data/
     print("Net setup")
 
     # data transform
-    transform = make_transform(gaussian_blur_size=0, class_size=resize)
+    transform = make_transform(gaussian_blur_size=None, class_size=resize)
 
     dataset = GazeFrameDataset(data_path, videos_list, transform=transform)
     dataloader = torch.utils.data.DataLoader(dataset)
@@ -49,7 +51,9 @@ def validate(device, videos_list, model_file, resize=(5,5), data_path = "./data/
             weights.append(np.sum(y_class_true))
     return scores, weights
 
-def validate_shifted_grids(device, videos_list, model_file, N=5, resize=(5,5), data_path = "./data/"):
+def validate_shifted_grids(videos_list, model_file, N=5, resize=(5,5), data_path = "./data/"):
+
+    device = torch.device('cpu')
 
     # Load net and optimizer
     model = torch.load(model_file, map_location=device)
@@ -72,16 +76,19 @@ def validate_shifted_grids(device, videos_list, model_file, N=5, resize=(5,5), d
             print(i+1)
         im, targets = data[0].to(device), data[1]
         outputs = net(im)
-        final_output 
+        final_output = np.zeros(resize[0] * resize[1])
+        final_target = np.zeros(resize[0] * resize[1])
         for j in range(len(outputs)):
             output = outputs[j]
+            output = np.squeeze(output.detach().numpy())
+            output = cv2.resize(output, dsize=resize).flatten() # resize
+            final_output += output
             target = targets[j].to(device)
             target = np.squeeze(target.detach().numpy())
-            output = np.squeeze(output.detach().numpy())
-        output = cv2.resize(output, dsize=resize).flatten() # resize
-        output = output / np.sum(output) # normalize array to sum to 1
-        y_true.append(target)
-        y_score.append(output)
+            final_target[target] += 1
+        final_output = final_output / np.sum(final_output) # normalize array to sum to 1
+        y_true.append(np.argmax(final_target))
+        y_score.append(final_output)
 
     y_true = np.array(y_true)
     y_score = np.array(y_score)
@@ -134,9 +141,6 @@ def validate_shifted_grids(device, videos_list, model_file, N=5, resize=(5,5), d
 
 if __name__ == '__main__':
 
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    print('Running on device: {}'.format(device))
-
     args = parser.parse_args()
 
     videos_list = get_videos_list_from_file(args.validation_file)
@@ -144,21 +148,9 @@ if __name__ == '__main__':
     current_time = datetime.now()
     print("Starting at", current_time.strftime("%m/%d/%Y %H:%M:%S"))
     if not args.shifted_grids:
-        scores, weights = validate(device, videos_list, args.model)
-    #     save_as = "model_blur_" + str(args.gaussian_blur_size)
-    # else:
-    #     net, optimizer = train_shifted_grids(device,
-    #          N=args.N,
-    #          learning_rate=args.learning_rate,
-    #          num_epochs=args.num_epochs,
-    #          batch_size=args.batch_size
-    #     )
-    #     save_as = "model_shifted_grids_N_" + str(args.N)
-
-    # save_as += "_lr_" + str(args.learning_rate) + \
-    #     "_epochs_" + str(args.num_epochs) + \
-    #     "_batch_" + str(args.batch_size) + \
-    #     "_" + current_time.strftime("%m-%d-%Y_%H-%M") + ".tar"
+        scores, weights = validate(videos_list, args.model)
+    else:
+        scores, weights = validate_shifted_grids(videos_list, args.model, args.N)
 
     weighted_score = np.sum(np.array(scores) * np.array(weights) / np.sum(weights))
     print(weighted_score)

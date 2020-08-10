@@ -111,11 +111,14 @@ class SetSize(object):
 			target[gaze_y, gaze_x] = 1
 			target = cv2.GaussianBlur(target, self.gaussian_blur_size, 0)
 		# Class label
-		else:
+		elif self.class_size:
 			height, width = self.class_size
 			gaze_y = get_abs_pos(gaze_norm_y, height)
 			gaze_x = get_abs_pos(gaze_norm_x, width)
 			target = gaze_y * width + gaze_x
+		# Normalized coordinates
+		else:
+			target = gaze_position
 
 		return resized_frame, target
 
@@ -139,9 +142,10 @@ class SetSizeShiftedGrids(object):
 	create target classes from gaze location for shifted grids method
 	"""
 
-	def __init__(self, frame_size, N):
+	def __init__(self, frame_size, N, class_size=None):
 		self.frame_size = frame_size
 		self.N = N
+		self.class_size = class_size
 
 		shift = 1 / (2 * N)
 		self.shifted_grids = [
@@ -161,14 +165,20 @@ class SetSizeShiftedGrids(object):
 		# Create target saliency map with shifted grids
 		targets = []
 		gaze_norm_x, gaze_norm_y = gaze_position
+		get_abs_pos = lambda x, upper: int(max(0, min(x * upper, upper-1)))
 		for i in range(len(self.shifted_grids)):
 			x_shift, y_shift = self.shifted_grids[i]
 			gaze_norm_x_shifted = gaze_norm_x + x_shift
 			gaze_norm_y_shifted = gaze_norm_y + y_shift
-			get_abs_pos = lambda x, upper: int(max(0, min(x * upper, upper-1)))
-			gaze_y = get_abs_pos(gaze_norm_y_shifted, self.N)
-			gaze_x = get_abs_pos(gaze_norm_x_shifted, self.N)
-			target = gaze_y * self.N + gaze_x
+			if not self.class_size:
+				gaze_y = get_abs_pos(gaze_norm_y_shifted, self.N)
+				gaze_x = get_abs_pos(gaze_norm_x_shifted, self.N)
+				target = gaze_y * self.N + gaze_x
+			else:
+				height, width = self.class_size
+				gaze_y = get_abs_pos(gaze_norm_y, height)
+				gaze_x = get_abs_pos(gaze_norm_x, width)
+				target = gaze_y * width + gaze_x
 			targets.append(target)
 
 		return resized_frame, targets
@@ -193,8 +203,8 @@ def make_transform(gaussian_blur_size=(3,3), class_size=None):
     transform = transforms.Compose([size_transform, tensor_transform])
     return transform
 
-def make_transform_shifted_grids(N=5):
-    size_transform = SetSizeShiftedGrids((227,227), N)
+def make_transform_shifted_grids(N=5, class_size=None):
+    size_transform = SetSizeShiftedGrids((227,227), N, class_size)
     tensor_transform = ToTensorShiftedGrids()
     transform = transforms.Compose([size_transform, tensor_transform])
     return transform
