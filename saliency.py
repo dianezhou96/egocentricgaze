@@ -30,7 +30,8 @@ class SaliencyNet(nn.Module):
         # Additional convolutional layer to turn into saliency map
         self.classifier = nn.Sequential(
             nn.Conv2d(256, 1, kernel_size=1),
-            nn.ReLU(inplace=True)
+            nn.Flatten(),
+            nn.Softmax(dim=1)
         )
 
     def forward(self, x):

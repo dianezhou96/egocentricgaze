@@ -110,6 +110,7 @@ class SetSize(object):
 			target = np.zeros((height, width))
 			target[gaze_y, gaze_x] = 1
 			target = cv2.GaussianBlur(target, self.gaussian_blur_size, 0)
+			target = target.flatten()	
 		# Class label
 		elif self.class_size:
 			height, width = self.class_size
@@ -133,7 +134,6 @@ class ToTensor(object):
 		# numpy image: H x W x C
 		# torch image: C x H x W
 		frame = frame.transpose((2, 0, 1)) / 255 # 0 to 1 instead of 0 to 255
-		target = np.expand_dims(target, 0)
 		return (torch.from_numpy(frame).float(), torch.from_numpy(target).float())
 
 class SetSizeShiftedGrids(object):
