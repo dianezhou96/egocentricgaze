@@ -60,7 +60,7 @@ def train_shifted_grids(device, videos_list, N=5, learning_rate=0.01, num_epochs
     batch_size=32, saved_model=None, data_path="./data/"):
 
     # net
-    net = SaliencyNet()
+    net = SaliencyShiftedGridsNet(N)
     net.to(device)
 
     # optimizer
@@ -73,8 +73,10 @@ def train_shifted_grids(device, videos_list, N=5, learning_rate=0.01, num_epochs
         net.train()
         optimizer.load_state_dict(model['optimizer_state_dict'])
 
-    # loss function
-    criterion = nn.MSELoss()
+    # loss functions
+    criterions = []
+    for i in range(5):
+        criterions.append(nn.CrossEntropyLoss())
     print("net setup")
 
     # data transform
