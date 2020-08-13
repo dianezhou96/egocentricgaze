@@ -14,6 +14,4 @@ parser.add_argument("--learning_rate", type=float, default=0.01, help="Learning 
 parser.add_argument("--num_epochs", type=int, default=5, help="Number of epochs to train")
 parser.add_argument("--batch_size", type=int, default=32, help="Batch size for training")
 
-parser.add_argument("--model", default="model_blur_3_lr_0.01_epochs_5_batch_32_08-06-2020_15-45.tar", 
-	help="Path to model file")
-
+parser.add_argument("--model", default=None, help="Path to model file")

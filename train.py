@@ -7,17 +7,26 @@ import torch
 
 
 def train(device, videos_list, gaussian_blur_size=(3,3), learning_rate=0.01, num_epochs=10, 
-    batch_size=32, data_path="./data/"):
+    batch_size=32, saved_model=None, data_path="./data/"):
 
-    # net
-    net = SaliencyNet()
-    net.to(device)
+    if not saved_model:
+        # net
+        net = SaliencyNet()
+        net.to(device)
+
+        # optimizer
+        optimizer = optim.SGD(net.parameters(), lr=learning_rate)
+    else:
+        # Load net and optimizer
+        model = torch.load(saved_model, map_location=device)
+        net = SaliencyNet()
+        net.load_state_dict(model['model_state_dict'])
+        net.train()
+        optimizer = optim.SGD(net.parameters(), lr=learning_rate)
+        optimizer.load_state_dict(model['optimizer_state_dict'])
 
     # loss function
     criterion = nn.MSELoss()
-
-    # optimizer
-    optimizer = optim.SGD(net.parameters(), lr=learning_rate)
     print("Net setup")
 
     # data transform
@@ -48,22 +57,26 @@ def train(device, videos_list, gaussian_blur_size=(3,3), learning_rate=0.01, num
     return net, optimizer
 
 def train_shifted_grids(device, videos_list, N=5, learning_rate=0.01, num_epochs=10, 
-    batch_size=32, data_path="./data/"):
+    batch_size=32, saved_model=None, data_path="./data/"):
 
-    # net
-    net = SaliencyShiftedGridsNet(N)
-    net.to(device)
+    if not saved_model:
+        # net
+        net = SaliencyNet()
+        net.to(device)
 
-    # loss functions
-    criterions = []
-    for i in range(5):
-        criterions.append(nn.CrossEntropyLoss())
+        # optimizer
+        optimizer = optim.SGD(net.parameters(), lr=learning_rate)
+    else:
+        # Load net and optimizer
+        model = torch.load(saved_model, map_location=device)
+        net = SaliencyNet()
+        net.load_state_dict(model['model_state_dict'])
+        net.train()
+        optimizer = optim.SGD(net.parameters(), lr=learning_rate)
+        optimizer.load_state_dict(model['optimizer_state_dict'])
 
-    # optimizer
-    optimizer = optim.SGD(net.parameters(), lr=learning_rate)
-    # a = net.parameters()
-    # for x in a:
-    #     print(x)
+    # loss function
+    criterion = nn.MSELoss()
     print("net setup")
 
     # data transform
@@ -127,7 +140,8 @@ if __name__ == '__main__':
             gaussian_blur_size=blur, 
             learning_rate=args.learning_rate, 
             num_epochs=args.num_epochs,
-            batch_size=args.batch_size
+            batch_size=args.batch_size,
+            saved_model=args.model
         )
         save_as = "model_blur_" + str(args.gaussian_blur_size)
     else:
@@ -135,7 +149,8 @@ if __name__ == '__main__':
              N=args.N,
              learning_rate=args.learning_rate,
              num_epochs=args.num_epochs,
-             batch_size=args.batch_size
+             batch_size=args.batch_size,
+             saved_model=args.model
         )
         save_as = "model_shifted_grids_N_" + str(args.N)
 
