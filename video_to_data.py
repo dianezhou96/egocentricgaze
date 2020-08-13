@@ -69,7 +69,7 @@ class GazeFrameDataset(IterableDataset):
         return sample
 
     def get_video_reader(self, video_name):
-        path = self.data_path + video_name + '/world.mp4'
+        path = self.data_path + video_name + '/world_resized.mp4'
         video = mmcv.VideoReader(path)
         return video
 
@@ -97,7 +97,8 @@ class SetSize(object):
         frame, gaze_position = sample
 
         # Resize frame
-        resized_frame = cv2.resize(frame, dsize=self.frame_size)
+        # resized_frame = cv2.resize(frame, dsize=self.frame_size)
+        resized_frame = frame
 
         # Create target
         gaze_norm_x, gaze_norm_y = gaze_position
@@ -160,7 +161,8 @@ class SetSizeShiftedGrids(object):
         frame, gaze_position = sample
 
         # Resize frame
-        resized_frame = cv2.resize(frame, dsize=self.frame_size)
+        # resized_frame = cv2.resize(frame, dsize=self.frame_size)
+        resized_frame = frame
 
         # Create target saliency map with shifted grids
         targets = []
@@ -180,6 +182,7 @@ class SetSizeShiftedGrids(object):
                 gaze_x = get_abs_pos(gaze_norm_x, width)
                 target = gaze_y * width + gaze_x
             targets.append(target)
+            #TODO version returning norm gaze pos
 
         return resized_frame, targets
 
