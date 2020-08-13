@@ -6,23 +6,23 @@ import torch
 
 
 
+torch.backends.cudnn.benchmark = True
+
 def train(device, videos_list, gaussian_blur_size=(3,3), learning_rate=0.01, num_epochs=10, 
     batch_size=32, saved_model=None, data_path="./data/"):
 
-    if not saved_model:
-        # net
-        net = SaliencyNet()
-        net.to(device)
+    # net
+    net = SaliencyNet()
+    net.to(device)
 
-        # optimizer
-        optimizer = optim.SGD(net.parameters(), lr=learning_rate)
-    else:
-        # Load net and optimizer
+    # optimizer
+    optimizer = optim.SGD(net.parameters(), lr=learning_rate)
+
+    # Load saved model if any
+    if saved_model:
         model = torch.load(saved_model, map_location=device)
-        net = SaliencyNet()
         net.load_state_dict(model['model_state_dict'])
         net.train()
-        optimizer = optim.SGD(net.parameters(), lr=learning_rate)
         optimizer.load_state_dict(model['optimizer_state_dict'])
 
     # loss function
@@ -52,27 +52,25 @@ def train(device, videos_list, gaussian_blur_size=(3,3), learning_rate=0.01, num
                     (epoch + 1, i + 1, running_loss / 100))
                 running_loss = 0.0
 
-        save_model(net, optimizer, "model_" + str(epoch+1) + '.tar')
+        save_model(net, optimizer, "checkpoint_blur_" + str(gaussian_blur_size) + "_epoch_" + str(epoch+1) + '.tar')
 
     return net, optimizer
 
 def train_shifted_grids(device, videos_list, N=5, learning_rate=0.01, num_epochs=10, 
     batch_size=32, saved_model=None, data_path="./data/"):
 
-    if not saved_model:
-        # net
-        net = SaliencyNet()
-        net.to(device)
+    # net
+    net = SaliencyNet()
+    net.to(device)
 
-        # optimizer
-        optimizer = optim.SGD(net.parameters(), lr=learning_rate)
-    else:
-        # Load net and optimizer
+    # optimizer
+    optimizer = optim.SGD(net.parameters(), lr=learning_rate)
+
+    # Load saved model if any
+    if saved_model:
         model = torch.load(saved_model, map_location=device)
-        net = SaliencyNet()
         net.load_state_dict(model['model_state_dict'])
         net.train()
-        optimizer = optim.SGD(net.parameters(), lr=learning_rate)
         optimizer.load_state_dict(model['optimizer_state_dict'])
 
     # loss function
@@ -111,7 +109,7 @@ def train_shifted_grids(device, videos_list, N=5, learning_rate=0.01, num_epochs
                     (epoch + 1, i + 1, running_loss / 100))
                 running_loss = 0.0
 
-        save_model(net, optimizer, "model_shifted_" + str(epoch+1) + '.tar')
+        save_model(net, optimizer, "checkpoint_N_" + str(N) + "_shifted_" + str(epoch+1) + '.tar')
 
     return net, optimizer
 
