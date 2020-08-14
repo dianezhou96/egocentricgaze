@@ -51,7 +51,10 @@ class GazeFrameDataset(IterableDataset):
             video = self.video_readers[video_idx]
             gaze_df = self.gaze_dfs[video_idx]
             frame_idx = gaze_df.loc[gaze_idx, 'world_index']
-            frame = video[frame_idx]
+            if frame_idx < len(video):
+                frame = video[frame_idx]
+            else:
+                frame = None
 
             self.video_gaze_idx += 1
             if frame is not None:
