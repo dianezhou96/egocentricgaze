@@ -51,7 +51,10 @@ class GazeFrameDataset(IterableDataset):
             video = self.video_readers[video_idx]
             gaze_df = self.gaze_dfs[video_idx]
             frame_idx = gaze_df.loc[gaze_idx, 'world_index']
-            frame = video[frame_idx]
+            if frame_idx < len(video):
+                frame = video[frame_idx]
+            else:
+                frame = None
 
             self.video_gaze_idx += 1
             if frame is not None:
@@ -148,14 +151,15 @@ class SetSizeShiftedGrids(object):
         self.N = N
         self.class_size = class_size
 
-        shift = 1 / (2 * N)
-        self.shifted_grids = [
-            (0, 0),
-            (-shift, 0),
-            (shift, 0),
-            (0, -shift),
-            (0, shift)
-        ]
+        if self.N:
+            shift = 1 / (2 * N)
+            self.shifted_grids = [
+                (0, 0),
+                (-shift, 0),
+                (shift, 0),
+                (0, -shift),
+                (0, shift)
+            ]
 
     def __call__(self, sample):
         frame, gaze_position = sample
@@ -165,8 +169,11 @@ class SetSizeShiftedGrids(object):
         resized_frame = frame
 
         # Create target saliency map with shifted grids
-        targets = []
         gaze_norm_x, gaze_norm_y = gaze_position
+        if not self.N: # Only need the normalized positions
+            return resized_frame, [gaze_norm_y, gaze_norm_x]
+
+        targets = []
         get_abs_pos = lambda x, upper: int(max(0, min(x * upper, upper-1)))
         for i in range(len(self.shifted_grids)):
             x_shift, y_shift = self.shifted_grids[i]
@@ -178,8 +185,8 @@ class SetSizeShiftedGrids(object):
                 target = gaze_y * self.N + gaze_x
             else:
                 height, width = self.class_size
-                gaze_y = get_abs_pos(gaze_norm_y, height)
-                gaze_x = get_abs_pos(gaze_norm_x, width)
+                gaze_y = get_abs_pos(gaze_norm_y_shifted, height)
+                gaze_x = get_abs_pos(gaze_norm_x_shifted, width)
                 target = gaze_y * width + gaze_x
             targets.append(target)
             #TODO version returning norm gaze pos
@@ -255,7 +262,7 @@ if __name__ == '__main__':
 
     data_path = "./data/"
     videos_list = ["2020-03-15_19-27-56-f2472745", "2020-06-22_11-14-22-319eaf00", 
-                   "2020-06-25_17-25-16_alexl_everyday-tyingshoelaces-189703d3"]
+                   "2020-06-25_17-25-16-189703d3"]
     dataset = GazeFrameDataset(data_path, videos_list, transform=transform, shuffle=True)
     # for i, sample in enumerate(dataset):
     #   if i % 100 == 99:
