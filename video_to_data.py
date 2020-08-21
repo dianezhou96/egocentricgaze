@@ -189,7 +189,6 @@ class SetSizeShiftedGrids(object):
                 gaze_x = get_abs_pos(gaze_norm_x_shifted, width)
                 target = gaze_y * width + gaze_x
             targets.append(target)
-            #TODO version returning norm gaze pos
 
         return resized_frame, targets
 
@@ -222,6 +221,8 @@ def make_transform_shifted_grids(N=5, class_size=None):
 def get_videos_list_from_file(filename):
     with open(filename, 'r') as f:
         videos_list = f.read().split("\n")
+    if len(videos_list[-1]) == 0: # in case last line is empty
+        videos_list.pop()
     return videos_list
 
 

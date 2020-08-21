@@ -129,6 +129,8 @@ def auroc(videos_list, model_file, resize=(5,5), data_path="./data/"):
         output = np.squeeze(output.detach().numpy())
         output = cv2.resize(output, dsize=resize).flatten() # resize
         output = output / np.sum(output) # normalize array to sum to 1
+       # output = np.zeros(resize[0] * resize[1])
+       # output[resize[0] * resize[1] // 2] = 1
         y_true.append(target)
         y_score.append(output)
 
@@ -171,7 +173,6 @@ def auroc_shifted_grids(videos_list, model_file, N=5, resize=(5,5), data_path = 
             target = targets[j].to(device)
             target = np.squeeze(target.detach().numpy())
             final_target[target] += 1
-        # final_output = final_output / np.sum(final_output) # normalize array to sum to 1
         y_true.append(np.argmax(final_target))
         y_score.append(final_output)
 
