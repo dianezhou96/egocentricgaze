@@ -1,5 +1,7 @@
 # Egocentric Gaze Prediction
 
+This is the implementation code for the research described in the paper "Gaze Prediction in First-Person View Videos" (MIT MEng Thesis by Diane Zhou, Summer 2020). Data and trained models are not included for privacy purposes.
+
 ### Two convolutional neural networks to learn to predict gaze in egocentric videos based on saliency maps:
 - `saliency.py` - Regression model that outputs a saliency map where higher value means more likely to gaze at that position. For training, the target is a saliency map with a Gaussian blur around true gaze location, and the loss function is MSE.
 - `saliency_shifted_grids.py` - Classification model with shifted grids that outputs 5 saliency maps shfited in different ways. For training, the targets are 5 class labels representing the true gaze location, and the loss function is cross entropy.
@@ -11,7 +13,7 @@
   `python train.py --gaussian_blur_size <blur size for the target>`
 - To train the classification model with shifted grids:
   `python train.py --shifted_grids True --N <size of grid>`
-- Optional parameters (see `parser.py` for default values)
+- Optional parameters (see `parser.py` for default values):
   - `learning_rate`
   - `num_epochs`
   - `batch_size`
